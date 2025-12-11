@@ -28,6 +28,7 @@ router.post('/telegram', async (req: TelegramAuthRequest, res: Response) => {
 
     // Проверка подписи initData
     if (!validateTelegramInitData(initData, botToken)) {
+      console.log('Invalid initData signature');
       return res.status(401).json({ error: 'Invalid initData signature' });
     }
 

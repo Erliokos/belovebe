@@ -5,7 +5,7 @@ import svgr from 'vite-plugin-svgr';
 export default defineConfig({
   plugins: [react(), svgr()],
   server: {
-    port: 3002,
+    port: 3003,
     host: true,
     watch: {
       usePolling: true
