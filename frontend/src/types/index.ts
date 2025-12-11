@@ -192,3 +192,28 @@ export interface UnreadMessage {
   unreadResponses: number[]
 }
 
+export interface DiscoverPhoto {
+  id: string;
+  url: string;
+  isProfilePhoto: boolean;
+}
+
+export interface DiscoverUser {
+  id: string;
+  displayName?: string;
+  birthdate?: string;   // ISO date
+  gender?: string;
+  genderPreferences: string[];
+  bio?: string;
+  city?: string;
+  country?: string;
+  lat?: number;
+  lng?: number;
+
+  photos: DiscoverPhoto[];
+}
+
+export interface DiscoverResponse {
+  count: number;
+  users: DiscoverUser[];
+}

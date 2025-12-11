@@ -16,6 +16,7 @@ import {
   City,
   TaskStatus,
   UnreadMessage,
+  DiscoverResponse,
 } from '../types';
 
 
@@ -205,6 +206,19 @@ export const notificationsAPI = {
     return response.data
   }
 }
+
+export const discoverAPI = {
+  getDiscover: async (params?: {
+    ageMin?: number;
+    ageMax?: number;
+    maxDistance?: number;
+    limit?: number;
+    skip?: number;
+  }): Promise<DiscoverResponse> => {
+    const response = await apiClient.get<DiscoverResponse>('/discover', { params });
+    return response.data;
+  },
+};
 
 export default apiClient;
 

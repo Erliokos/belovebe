@@ -1,15 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { tasksAPI, filtersAPI } from '../api/client';
-import { useAppStore } from '../stores/appStore';
-import TaskCard from '../components/TaskCard';
-import CategoriesFiltersModal from '../components/CategoriesFiltersModal';
+import { discoverAPI } from '../api/client';
+// import CategoriesFiltersModal from '../components/CategoriesFiltersModal';
 import MapModal from '../components/MapModal';
-import { Task } from '../types';
-import IconFilter from '../assets/filter.svg?react'
+import { DiscoverUser } from '../types';
+// import IconFilter from '../assets/filter.svg?react'
 import IconMap from '../assets/map.svg?react'
 import { SwipeManagerProvider } from '../stores/SwipeManagerContext';
 
@@ -77,70 +75,67 @@ const FilterIcon = styled.svg`
 
 export default function FeedPage() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
-  const { 
-    filters, 
-    setFilters, 
-    filtersLoaded, 
-    setFiltersLoaded,
-    setFiltersModalOpen, 
-    isFiltersModalOpen 
-  } = useAppStore();
-  const [page] = useState(1);
+  // const navigate = useNavigate();
+  // const { 
+  //   filters, 
+  //   setFilters, 
+  //   filtersLoaded, 
+  //   setFiltersLoaded,
+  //   setFiltersModalOpen,
+  //   isFiltersModalOpen 
+  // } = useAppStore();
+  // const [page] = useState(1);
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
 
   // Загружаем фильтры при первой загрузке
-  const { data: userFilters, isLoading: filtersLoading } = useQuery({
-    queryKey: ['userFilters'],
-    queryFn: filtersAPI.getFilters,
-    enabled: !filtersLoaded,
-  });
+  // const { data: userFilters, isLoading: filtersLoading } = useQuery({
+  //   queryKey: ['userFilters'],
+  //   queryFn: filtersAPI.getFilters,
+  //   enabled: !filtersLoaded,
+  // });
 
-  useEffect(() => {
-    if (userFilters && !filtersLoaded) {
-      setFilters(userFilters);
-      setFiltersLoaded(true);
-    }
-  }, [userFilters, filtersLoaded, setFilters, setFiltersLoaded]);
+  // useEffect(() => {
+  //   if (userFilters && !filtersLoaded) {
+  //     setFilters(userFilters);
+  //     setFiltersLoaded(true);
+  //   }
+  // }, [userFilters, filtersLoaded, setFilters, setFiltersLoaded]);
 
   // Формируем параметры запроса задач
-  const categoriesParam = filters.selectedCategories.length > 0 
-    ? filters.selectedCategories.join(',') 
-    : undefined;
-  const countriesParam = filters.selectedCountries.length > 0 
-    ? filters.selectedCountries.join(',') 
-    : undefined;
-  const citiesParam = filters.selectedCities.length > 0 
-    ? filters.selectedCities.join(',') 
-    : undefined;
-  const worldwideParam = filters.worldwideMode ? 'true' : undefined;
+  // const countriesParam = filters.selectedCountries.length > 0 
+  //   ? filters.selectedCountries.join(',') 
+  //   : undefined;
+  // const citiesParam = filters.selectedCities.length > 0 
+  //   ? filters.selectedCities.join(',') 
+  //   : undefined;
+ 
+  const [ageMin, ageMax, maxDistance, limit, skip] = [18, 100, 100, 100, 0]
 
-  // Запрос задач выполняется только после загрузки фильтров
   const { data, isLoading, error } = useQuery({
-    queryKey: ['tasks', categoriesParam, countriesParam, citiesParam, worldwideParam, page],
-    queryFn: () => tasksAPI.getTasks({ 
-      categories: categoriesParam, 
-      countries: countriesParam,
-      cities: citiesParam,
-      worldwide: worldwideParam,
-      page, 
-      limit: 20 
-    }),
-    enabled: filtersLoaded, // Запрос выполняется только после загрузки фильтров
+    queryKey: ['discover', ageMin, ageMax, maxDistance, limit, skip],
+    queryFn: () =>
+      discoverAPI.getDiscover({
+        ageMin,
+        ageMax,
+        maxDistance,
+        limit,
+        skip
+      }),
+    enabled: !!ageMin && !!ageMax,
     refetchInterval: 5000
-  });
+  })
 
-  const handleTaskClick = (taskId: number) => {
-    navigate(`/task/${taskId}`);
-  };
+  // const handleTaskClick = (taskId: number) => {
+  //   navigate(`/task/${taskId}`);
+  // };
 
-  if (filtersLoading || !filtersLoaded) {
-    return (
-      <Container>
-        <LoadingText>{t('feed.loading')}</LoadingText>
-      </Container>
-    );
-  }
+  // if (filtersLoading || !filtersLoaded) {
+  //   return (
+  //     <Container>
+  //       <LoadingText>{t('feed.loading')}</LoadingText>
+  //     </Container>
+  //   );
+  // }
 
   if (isLoading) {
     return (
@@ -165,25 +160,21 @@ export default function FeedPage() {
         <Button onClick={() => setIsMapModalOpen(true)}>
           <FilterIcon as={IconMap} />
         </Button>
-        <Button onClick={() => setFiltersModalOpen(true)}>
+        {/* <Button onClick={() => setFiltersModalOpen(true)}>
           <FilterIcon as={IconFilter} />
-        </Button>
+        </Button> */}
       </Header>
       <SwipeManagerProvider>
         <TasksList>
-          {data?.tasks?.map((task: Task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              onClick={() => handleTaskClick(task.id)}
-            />
-          ))}
-          {data?.tasks?.length === 0 && (
+          {data?.users?.map((user: DiscoverUser) => {
+            return <div>{user.displayName}</div>
+          })}
+          {data?.users?.length === 0 && (
             <LoadingText>{t('feed.noTasks')}</LoadingText>
           )}
         </TasksList>
       </SwipeManagerProvider>
-      {isFiltersModalOpen && <CategoriesFiltersModal />}
+      {/* {isFiltersModalOpen && <CategoriesFiltersModal />} */}
       {isMapModalOpen && <MapModal onClose={() => setIsMapModalOpen(false)} />}
     </Container>
   )

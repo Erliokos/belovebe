@@ -9,6 +9,7 @@ import dotenv from 'dotenv';
 import { authRouter } from './routes/auth.routes';
 import { swaggerRouter } from './routes/swagger.routes';
 import { profileRouter } from './routes/profile.routes';
+import { discoverRouter } from './routes/discover.routes';
 
 
 dotenv.config();
@@ -35,6 +36,7 @@ app.use('/api/docs', swaggerRouter);
 // API Routes
 app.use('/api/auth', authRouter);
 app.use('/api/profile', profileRouter);
+app.use('/api/discover', discoverRouter);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
