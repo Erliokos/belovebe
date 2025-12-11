@@ -1,221 +1,204 @@
+// ------------------------------------------------------
+// Datasource & Generator
+// ------------------------------------------------------
+datasource db {
+  provider = "postgresql"
+}
+
 generator client {
   provider = "prisma-client-js"
 }
 
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+// ------------------------------------------------------
+// ENUMS
+// ------------------------------------------------------
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
 }
 
-model User {
-  id         Int       @id @default(autoincrement())
-  publicId   String    @unique @default(uuid())
-
-  tg_id      BigInt   @unique
-  firstName  String?
-  lastName   String?
-  username   String?
-  isBot      Boolean?
-  language   String?
-  role       UserRole  @default(USER)
-
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-
-  createdTasks      Task[]     @relation("TaskAuthor")
-  responses         Response[]
-  profile           Profile?
-  templates         ResponseTemplate[]
-  authorChats       Conversation[] @relation("AuthorConversations")
-  executorChats     Conversation[] @relation("ExecutorConversations")
-  messages          Message[]
-  filters           UserFilters?
-
-  @@index([tg_id])
+enum LikeType {
+  LIKE
+  SUPERLIKE
+  PASS
 }
 
-model Profile {
-  id              Int     @id @default(autoincrement())
-  publicId        String  @unique @default(uuid())
-
-  rating          Float   @default(0.0)
-  completedTasks  Int     @default(0)
-  currentTasks    Int     @default(0)
-  preferredCity   String?
-  preferredCountry String?
-  
-  userId          Int     @unique
-  user            User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+enum MatchStatus {
+  ACTIVE
+  UNMATCHED
 }
 
-model Category {
-  id     Int     @id @default(autoincrement())
-  publicId String @unique @default(uuid())
-
-  name   String  @unique
-  tasks  Task[]
-}
-
-model Task {
-  id          Int         @id @default(autoincrement())
-  publicId    String      @unique @default(uuid())
-
-  title       String
-  description String
-  categoryId  Int
-  category    Category    @relation(fields: [categoryId], references: [id])
-
-  authorId    Int
-  author      User        @relation("TaskAuthor", fields: [authorId], references: [id])
-
-  budget      Float?
-  startDate   DateTime?
-  endDate     DateTime?
-  country     String?
-  city        String?
-  street      String?
-  house       String?
-  latitude    Float?
-  longitude   Float?
-
-  status      TaskStatus  @default(PUBLISHED)
-  viewsCount  Int         @default(0)
-  viewedResponsesCount Int @default(0)
-
-  archived    Boolean     @default(false)
-  archivedAt  DateTime?
-
-  conversations Conversation[]
-  responses     Response[]
-
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-
-  @@index([status])
-  @@index([categoryId])
-  @@index([country])
-  @@index([city])
-  @@index([startDate])
-  @@index([createdAt])
-}
-
-model Response {
-  id          Int             @id @default(autoincrement())
-  publicId    String          @unique @default(uuid())
-
-  taskId      Int
-  task        Task            @relation(fields: [taskId], references: [id], onDelete: Cascade)
-
-  executorId  Int
-  executor    User            @relation(fields: [executorId], references: [id])
-
-  proposedSum Float?
-  coverLetter String?
-  status      ResponseStatus  @default(PENDING)
-
-  createdAt   DateTime        @default(now())
-
-  @@index([executorId])
-  @@index([taskId])
-}
-
-model Conversation {
-  id         Int        @id @default(autoincrement())
-  publicId   String     @unique @default(uuid())
-
-  taskId     Int
-  task       Task       @relation(fields: [taskId], references: [id], onDelete: Cascade)
-
-  authorId   Int
-  author     User       @relation("AuthorConversations", fields: [authorId], references: [id])
-
-  executorId Int
-  executor   User       @relation("ExecutorConversations", fields: [executorId], references: [id])
-
-  messages   Message[]
-
-  closed     Boolean    @default(false)  // вместо удаления диалога
-  closedAt   DateTime?
-
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-
-  @@unique([taskId, executorId])
-  @@index([authorId])
-  @@index([executorId])
-}
-
-model Message {
-  id             Int           @id @default(autoincrement())
-  publicId       String        @unique @default(uuid())
-
-  conversationId Int
-  conversation   Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-
-  senderId       Int
-  sender         User          @relation(fields: [senderId], references: [id])
-
-  content        String
-
-  replyToId      Int?
-  replyTo        Message?      @relation("MessageReplies", fields: [replyToId], references: [id])
-
-  replies        Message[]     @relation("MessageReplies")
-
-  readAt         DateTime?
-  editedAt       DateTime?
-
-  createdAt      DateTime      @default(now())
-
-  @@index([conversationId])
-  @@index([senderId])
-}
-
-model ResponseTemplate {
-  id          Int      @id @default(autoincrement())
-  publicId    String   @unique @default(uuid())
-
-  userId      Int
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title       String
-  proposedSum Float?
-  coverLetter String
-  order       Int      @default(0)
-
-  @@index([userId])
-}
-
-model UserFilters {
-  id                 Int     @id @default(autoincrement())
-  publicId           String  @unique @default(uuid())
-
-  userId             Int     @unique
-  user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  selectedCategories Json?
-  selectedCountries  Json?
-  selectedCities     Json?
-  worldwideMode      Boolean  @default(false)
-
-  updatedAt          DateTime @updatedAt
-}
-
-enum TaskStatus {
-  DRAFT
-  PUBLISHED
-  IN_PROGRESS
-  COMPLETED
-  CANCELLED
-}
-
-enum ResponseStatus {
+enum PhotoStatus {
   PENDING
-  ACCEPTED
+  APPROVED
   REJECTED
 }
 
-enum UserRole {
-  USER
-  ADMIN
-  MODERATOR
+// ------------------------------------------------------
+// USERS (authentication)
+// ------------------------------------------------------
+model User {
+  id              String   @id @default(uuid())
+  tg_id           BigInt   @unique
+  email           String?  @unique
+  phone           String?  @unique
+  passwordHash    String?
+  authProvider    String   @default("local")
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  lastLoginAt     DateTime?
+  isActive        Boolean  @default(true)
+  isDeleted       Boolean  @default(false)
+
+  profile         Profile?
+  likesFrom       Like[]   @relation("LikesFrom")
+  likesTo         Like[]   @relation("LikesTo")
+  matchesA        Match[]  @relation("MatchesA")
+  matchesB        Match[]  @relation("MatchesB")
+  messages        Message[]
+  blocksInitiator Block[]  @relation("Blocker")
+  blocksTarget    Block[]  @relation("Blocked")
+}
+
+// ------------------------------------------------------
+// PROFILE (public info)
+// ------------------------------------------------------
+model Profile {
+  id                     String   @id
+  user                   User     @relation(fields: [id], references: [id])
+  displayName            String?
+  birthdate              DateTime?
+  gender                 Gender?
+  genderPreferences      Gender[]
+  bio                    String?
+  city                   String?
+  country                String?
+
+  lat                    Float?
+  lng                    Float?
+
+  profileCompleted       Int      @default(0)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  photos                 Photo[]
+  interests              ProfileInterest[]
+}
+
+// ------------------------------------------------------
+// PHOTOS
+// ------------------------------------------------------
+model Photo {
+  id               String      @id @default(uuid())
+  profileId        String
+  url              String
+  isProfilePhoto   Boolean     @default(false)
+  moderatedStatus  PhotoStatus @default(PENDING)
+  createdAt        DateTime    @default(now())
+  deletedAt        DateTime?
+
+  profile          Profile     @relation(fields: [profileId], references: [id])
+}
+
+// ------------------------------------------------------
+// INTERESTS
+// ------------------------------------------------------
+model Interest {
+  id       String               @id @default(uuid())
+  name     String               @unique
+  profiles ProfileInterest[]
+}
+
+model ProfileInterest {
+  profileId  String
+  interestId String
+  weight     Int?   // optional score
+
+  profile    Profile  @relation(fields: [profileId], references: [id])
+  interest   Interest @relation(fields: [interestId], references: [id])
+
+  @@id([profileId, interestId])
+}
+
+// ------------------------------------------------------
+// LIKES
+// ------------------------------------------------------
+model Like {
+  id          String   @id @default(uuid())
+  fromUserId  String
+  toUserId    String
+  type        LikeType
+  createdAt   DateTime @default(now())
+
+  fromUser    User     @relation("LikesFrom", fields: [fromUserId], references: [id])
+  toUser      User     @relation("LikesTo", fields: [toUserId], references: [id])
+
+  @@unique([fromUserId, toUserId])
+  @@index([fromUserId])
+  @@index([toUserId])
+}
+
+// ------------------------------------------------------
+// MATCHES
+// ------------------------------------------------------
+model Match {
+  id         String       @id @default(uuid())
+  userAId    String
+  userBId    String
+  status     MatchStatus  @default(ACTIVE)
+  matchedAt  DateTime     @default(now())
+
+  userA      User         @relation("MatchesA", fields: [userAId], references: [id])
+  userB      User         @relation("MatchesB", fields: [userBId], references: [id])
+
+  conversation Conversation?
+
+  // ensure pair is unique regardless of order
+  @@unique([userAId, userBId])
+}
+
+// ------------------------------------------------------
+// CHAT & MESSAGES
+// ------------------------------------------------------
+model Conversation {
+  id           String     @id @default(uuid())
+  matchId      String?    @unique
+  createdAt    DateTime   @default(now())
+  lastMessageAt DateTime?
+
+  match        Match?     @relation(fields: [matchId], references: [id])
+  messages     Message[]
+}
+
+model Message {
+  id              String     @id @default(uuid())
+  conversationId  String
+  fromUserId      String
+  body            String?
+  createdAt       DateTime    @default(now())
+  readAt          DateTime?
+
+  conversation    Conversation @relation(fields: [conversationId], references: [id])
+  fromUser        User         @relation(fields: [fromUserId], references: [id])
+
+  @@index([conversationId])
+  @@index([fromUserId])
+}
+
+// ------------------------------------------------------
+// BLOCKS
+// ------------------------------------------------------
+model Block {
+  id          String   @id @default(uuid())
+  blockerId   String
+  blockedId   String
+  reason      String?
+  createdAt   DateTime @default(now())
+
+  blocker     User     @relation("Blocker", fields: [blockerId], references: [id])
+  blocked     User     @relation("Blocked", fields: [blockedId], references: [id])
+
+  @@unique([blockerId, blockedId])
 }

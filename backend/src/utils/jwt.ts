@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-change-in-production';
 
 export interface JWTPayload {
-  userId: number;
+  userId: string;
   tgId: string;
   username?: string;
 }

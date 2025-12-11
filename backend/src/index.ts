@@ -7,15 +7,9 @@ import dotenv from 'dotenv';
 };
 
 import { authRouter } from './routes/auth.routes';
-import { tasksRouter } from './routes/tasks.routes';
-import { responsesRouter } from './routes/responses.routes';
-import { chatRouter } from './routes/chat.routes';
-import { categoriesRouter } from './routes/categories.routes';
 import { swaggerRouter } from './routes/swagger.routes';
-import { filtersRouter } from './routes/filters.routes';
 import { profileRouter } from './routes/profile.routes';
-import { locationsRouter } from './routes/locations.routes';
-import { notificationsRouter } from './routes/notifications.routes';
+
 
 dotenv.config();
 
@@ -36,20 +30,13 @@ app.use(express.json());
 app.set('trust proxy', 1);
 
 // Swagger documentation
-app.use('/api-docs', swaggerRouter);
+app.use('/api/docs', swaggerRouter);
 
 // API Routes
 app.use('/api/auth', authRouter);
-app.use('/api/tasks', tasksRouter);
-app.use('/api/responses', responsesRouter);
-app.use('/api/categories', categoriesRouter);
-app.use('/api/chat', chatRouter);
-app.use('/api/filters', filtersRouter);
 app.use('/api/profile', profileRouter);
-app.use('/api/locations', locationsRouter);
-app.use('/api/notifications', notificationsRouter);
 
-app.get('/health', (req, res) => {
+app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 

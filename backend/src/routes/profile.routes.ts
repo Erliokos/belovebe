@@ -28,10 +28,8 @@ router.get('/', async (req: AuthRequest, res: Response) => {
     res.json({
       id: user.id,
       tgId: user.tg_id.toString(),
-      firstName: user.firstName,
-      lastName: user.lastName,
-      username: user.username,
-      language: user.language,
+      email: user.email,
+      phone: user.phone,
       profile: user.profile,
     });
   } catch (error) {
@@ -47,30 +45,43 @@ router.get('/', async (req: AuthRequest, res: Response) => {
 router.patch('/', async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.userId;
-    const { preferredCity, preferredCountry, language } = req.body;
-
-    // Обновляем язык пользователя
-    if (language !== undefined) {
-      await prisma.user.update({
-        where: { id: userId },
-        data: { language },
-      });
-    }
+    const {
+      displayName,
+      birthdate,
+      gender,
+      genderPreferences,
+      bio,
+      city,
+      country,
+      lat,
+      lng,
+    } = req.body;
 
     // Обновляем профиль
     const profile = await prisma.profile.upsert({
-      where: { userId },
+      where: { id: userId }, // id профиля = id пользователя
       update: {
-        ...(preferredCity !== undefined && { preferredCity }),
-        ...(preferredCountry !== undefined && { preferredCountry }),
+        ...(displayName !== undefined && { displayName }),
+        ...(birthdate !== undefined && { birthdate: new Date(birthdate) }),
+        ...(gender !== undefined && { gender }),
+        ...(genderPreferences !== undefined && { genderPreferences }),
+        ...(bio !== undefined && { bio }),
+        ...(city !== undefined && { city }),
+        ...(country !== undefined && { country }),
+        ...(lat !== undefined && { lat }),
+        ...(lng !== undefined && { lng }),
       },
       create: {
-        userId,
-        rating: 0.0,
-        completedTasks: 0,
-        currentTasks: 0,
-        preferredCity: preferredCity || null,
-        preferredCountry: preferredCountry || null,
+        id: userId,
+        displayName: displayName || null,
+        birthdate: birthdate ? new Date(birthdate) : null,
+        gender: gender || null,
+        genderPreferences: genderPreferences || [],
+        bio: bio || null,
+        city: city || null,
+        country: country || null,
+        lat: lat || null,
+        lng: lng || null,
       },
     });
 
@@ -82,10 +93,8 @@ router.patch('/', async (req: AuthRequest, res: Response) => {
     res.json({
       id: user!.id,
       tgId: user!.tg_id.toString(),
-      firstName: user!.firstName,
-      lastName: user!.lastName,
-      username: user!.username,
-      language: user!.language,
+      email: user!.email,
+      phone: user!.phone,
       profile: user!.profile,
     });
   } catch (error) {
@@ -95,4 +104,3 @@ router.patch('/', async (req: AuthRequest, res: Response) => {
 });
 
 export { router as profileRouter };
-
