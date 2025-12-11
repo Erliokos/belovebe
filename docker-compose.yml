@@ -29,7 +29,7 @@ services:
       dockerfile: Dockerfile
     container_name: belovebe-backend
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-belovebe}:${POSTGRES_PASSWORD:-belovebe_password}@postgres:5442/${POSTGRES_DB:-belovebe}?schema=public
+      DATABASE_URL: postgresql://${POSTGRES_USER:-belovebe}:${POSTGRES_PASSWORD:-belovebe_password}@postgres:5432/${POSTGRES_DB:-belovebe}?schema=public
       JWT_SECRET: ${JWT_SECRET}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
       PORT: 4000
