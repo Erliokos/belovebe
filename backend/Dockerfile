@@ -1,15 +1,17 @@
 # Backend Dockerfile
-FROM node:18-alpine3.18 AS builder
+# ----------------------
+# Используем Node.js 20 (Prisma 7 поддерживает только >=20.19)
+FROM node:20.19-alpine AS builder
 WORKDIR /app
 
 # Устанавливаем OpenSSL 1.1 для Prisma
 RUN apk add --no-cache openssl1.1-compat
 
-# Копируем package файлы
+# Копируем package файлы и Prisma схему
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Устанавливаем зависимости
+# Устанавливаем все зависимости
 RUN npm install
 
 # Копируем исходный код
@@ -21,33 +23,32 @@ RUN npm run prisma:generate
 # Собираем проект
 RUN npm run build
 
+# ----------------------
 # Production образ
-FROM node:18-alpine3.18
+FROM node:20.19-alpine
 WORKDIR /app
 
 # Устанавливаем OpenSSL 1.1 для Prisma
-RUN apk add --no-cache openssl1.1-compat
+RUN apk add --no-cache openssl1.1-compat wget curl
 
-# Копируем package файлы
+# Копируем package файлы и Prisma схему
 COPY package*.json ./
 COPY prisma ./prisma/
 
 # Устанавливаем только production зависимости
 RUN npm install --omit=dev
 
-# Копируем собранный код и Prisma Client
+# Копируем собранный код и Prisma Client из билдера
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
-# Генерируем Prisma Client для production
+# Генерируем Prisma Client для production (если необходимо)
 RUN npm run prisma:generate
 
-# Устанавливаем wget и curl для healthcheck
-RUN apk add --no-cache wget curl
-
+# Экспонируем порт
 EXPOSE 4000
 
-# Создаем entrypoint скрипт
+# Создаем entrypoint скрипт для генерации Prisma Client и миграций
 RUN echo '#!/bin/sh' > /app/entrypoint.sh && \
     echo 'set -e' >> /app/entrypoint.sh && \
     echo 'echo "Generating Prisma Client..."' >> /app/entrypoint.sh && \
@@ -58,5 +59,6 @@ RUN echo '#!/bin/sh' > /app/entrypoint.sh && \
     echo 'exec "$@"' >> /app/entrypoint.sh && \
     chmod +x /app/entrypoint.sh
 
+# Запуск entrypoint
 ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["npm", "start"]
