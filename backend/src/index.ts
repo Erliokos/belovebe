@@ -1,0 +1,59 @@
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+
+(BigInt.prototype as any).toJSON = function () {
+  return this.toString();
+};
+
+import { authRouter } from './routes/auth.routes';
+import { tasksRouter } from './routes/tasks.routes';
+import { responsesRouter } from './routes/responses.routes';
+import { chatRouter } from './routes/chat.routes';
+import { categoriesRouter } from './routes/categories.routes';
+import { swaggerRouter } from './routes/swagger.routes';
+import { filtersRouter } from './routes/filters.routes';
+import { profileRouter } from './routes/profile.routes';
+import { locationsRouter } from './routes/locations.routes';
+import { notificationsRouter } from './routes/notifications.routes';
+
+dotenv.config();
+
+const app = express();
+const PORT = process.env.PORT || 4000;
+
+// CORS настройки
+const corsOptions = {
+  origin: process.env.CORS_ORIGIN || '*', // В production укажите конкретные домены
+  credentials: true,
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
+app.use(express.json());
+
+// Trust proxy для правильной работы за nginx
+app.set('trust proxy', 1);
+
+// Swagger documentation
+app.use('/api-docs', swaggerRouter);
+
+// API Routes
+app.use('/api/auth', authRouter);
+app.use('/api/tasks', tasksRouter);
+app.use('/api/responses', responsesRouter);
+app.use('/api/categories', categoriesRouter);
+app.use('/api/chat', chatRouter);
+app.use('/api/filters', filtersRouter);
+app.use('/api/profile', profileRouter);
+app.use('/api/locations', locationsRouter);
+app.use('/api/notifications', notificationsRouter);
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
+

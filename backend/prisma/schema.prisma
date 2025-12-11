@@ -1,0 +1,221 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         Int       @id @default(autoincrement())
+  publicId   String    @unique @default(uuid())
+
+  tg_id      BigInt   @unique
+  firstName  String?
+  lastName   String?
+  username   String?
+  isBot      Boolean?
+  language   String?
+  role       UserRole  @default(USER)
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  createdTasks      Task[]     @relation("TaskAuthor")
+  responses         Response[]
+  profile           Profile?
+  templates         ResponseTemplate[]
+  authorChats       Conversation[] @relation("AuthorConversations")
+  executorChats     Conversation[] @relation("ExecutorConversations")
+  messages          Message[]
+  filters           UserFilters?
+
+  @@index([tg_id])
+}
+
+model Profile {
+  id              Int     @id @default(autoincrement())
+  publicId        String  @unique @default(uuid())
+
+  rating          Float   @default(0.0)
+  completedTasks  Int     @default(0)
+  currentTasks    Int     @default(0)
+  preferredCity   String?
+  preferredCountry String?
+  
+  userId          Int     @unique
+  user            User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Category {
+  id     Int     @id @default(autoincrement())
+  publicId String @unique @default(uuid())
+
+  name   String  @unique
+  tasks  Task[]
+}
+
+model Task {
+  id          Int         @id @default(autoincrement())
+  publicId    String      @unique @default(uuid())
+
+  title       String
+  description String
+  categoryId  Int
+  category    Category    @relation(fields: [categoryId], references: [id])
+
+  authorId    Int
+  author      User        @relation("TaskAuthor", fields: [authorId], references: [id])
+
+  budget      Float?
+  startDate   DateTime?
+  endDate     DateTime?
+  country     String?
+  city        String?
+  street      String?
+  house       String?
+  latitude    Float?
+  longitude   Float?
+
+  status      TaskStatus  @default(PUBLISHED)
+  viewsCount  Int         @default(0)
+  viewedResponsesCount Int @default(0)
+
+  archived    Boolean     @default(false)
+  archivedAt  DateTime?
+
+  conversations Conversation[]
+  responses     Response[]
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([status])
+  @@index([categoryId])
+  @@index([country])
+  @@index([city])
+  @@index([startDate])
+  @@index([createdAt])
+}
+
+model Response {
+  id          Int             @id @default(autoincrement())
+  publicId    String          @unique @default(uuid())
+
+  taskId      Int
+  task        Task            @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  executorId  Int
+  executor    User            @relation(fields: [executorId], references: [id])
+
+  proposedSum Float?
+  coverLetter String?
+  status      ResponseStatus  @default(PENDING)
+
+  createdAt   DateTime        @default(now())
+
+  @@index([executorId])
+  @@index([taskId])
+}
+
+model Conversation {
+  id         Int        @id @default(autoincrement())
+  publicId   String     @unique @default(uuid())
+
+  taskId     Int
+  task       Task       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  authorId   Int
+  author     User       @relation("AuthorConversations", fields: [authorId], references: [id])
+
+  executorId Int
+  executor   User       @relation("ExecutorConversations", fields: [executorId], references: [id])
+
+  messages   Message[]
+
+  closed     Boolean    @default(false)  // вместо удаления диалога
+  closedAt   DateTime?
+
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@unique([taskId, executorId])
+  @@index([authorId])
+  @@index([executorId])
+}
+
+model Message {
+  id             Int           @id @default(autoincrement())
+  publicId       String        @unique @default(uuid())
+
+  conversationId Int
+  conversation   Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  senderId       Int
+  sender         User          @relation(fields: [senderId], references: [id])
+
+  content        String
+
+  replyToId      Int?
+  replyTo        Message?      @relation("MessageReplies", fields: [replyToId], references: [id])
+
+  replies        Message[]     @relation("MessageReplies")
+
+  readAt         DateTime?
+  editedAt       DateTime?
+
+  createdAt      DateTime      @default(now())
+
+  @@index([conversationId])
+  @@index([senderId])
+}
+
+model ResponseTemplate {
+  id          Int      @id @default(autoincrement())
+  publicId    String   @unique @default(uuid())
+
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  proposedSum Float?
+  coverLetter String
+  order       Int      @default(0)
+
+  @@index([userId])
+}
+
+model UserFilters {
+  id                 Int     @id @default(autoincrement())
+  publicId           String  @unique @default(uuid())
+
+  userId             Int     @unique
+  user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  selectedCategories Json?
+  selectedCountries  Json?
+  selectedCities     Json?
+  worldwideMode      Boolean  @default(false)
+
+  updatedAt          DateTime @updatedAt
+}
+
+enum TaskStatus {
+  DRAFT
+  PUBLISHED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum ResponseStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  MODERATOR
+}

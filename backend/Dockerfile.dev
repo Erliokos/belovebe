@@ -1,0 +1,26 @@
+# Backend Dockerfile для разработки
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Устанавливаем OpenSSL 1.1 для Prisma
+RUN apk add --no-cache openssl1.1-compat
+
+# Устанавливаем зависимости
+COPY package*.json ./
+RUN npm install
+
+# Копируем Prisma schema
+COPY prisma ./prisma/
+
+# Генерируем Prisma Client
+RUN npm run prisma:generate
+
+# Копируем исходный код
+COPY . .
+
+EXPOSE 4000
+
+# Запускаем в режиме разработки с hot reload
+CMD ["npm", "run", "dev"]
+
