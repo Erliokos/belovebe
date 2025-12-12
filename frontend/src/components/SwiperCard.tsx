@@ -30,7 +30,7 @@ export function SwipeCard({
   const [isDragging, setDragging] = useState(false)
   const startX = useRef(0)
   const currentX = useRef(0)
-  const threshold = 1000
+  const threshold = window.innerWidth
 
   const handleStart = (e: React.TouchEvent | React.MouseEvent) => {
     setDragging(true)
@@ -58,11 +58,11 @@ export function SwipeCard({
     setDragging(false)
     const delta = currentX.current
 
-    if (delta < -240) {
+    if (delta < -window.innerWidth / 2) {
       cardRef.current!.style.transition = '0.3s'
       cardRef.current!.style.transform = 'translateX(-120%) rotate(-20deg)'
       leftAction?.()
-    } else if (delta > 240) {
+    } else if (delta > window.innerWidth / 2) {
       cardRef.current!.style.transition = '0.3s'
       cardRef.current!.style.transform = 'translateX(120%) rotate(20deg)'
       rightAction?.()

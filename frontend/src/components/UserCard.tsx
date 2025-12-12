@@ -10,7 +10,7 @@ const CardContainer = styled.div<{ visible: boolean }>`
   overflow: hidden;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
   transform: scale(${props => (props.visible ? 1 : 0.9)});
-  transition: 2s ease;
+  transition: 0.5s ease;
   filter: blur(${props => (props.visible ? 0 : 5)}px);
   z-index: 220;
 `
