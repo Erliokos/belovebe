@@ -2,16 +2,16 @@ import { useEffect, useState } from 'react'
 import styled from 'styled-components'
 import { SwipeCard } from './SwiperCard'
 
-const CardContainer = styled.div<{ visible: boolean }>`
+const CardContainer = styled.div<{ $visible: boolean }>`
   position: relative;
   width: 100%;
   height: 100%;
   border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
-  opacity: ${props => (props.visible ? 1 : 0)};
-  transform: scale(${props => (props.visible ? 1 : 0.1)});
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  /* box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25); */
+  /* opacity: ${props => (props.$visible ? 1 : 0)}; */
+  /* transform: scale(${props => (props.$visible ? 1 : 0.1)});
+  transition: opacity 0.3s ease, transform 0.3s ease; */
   z-index: 220;
   backface-visibility: hidden;
   transform-style: preserve-3d;
@@ -24,15 +24,15 @@ const Photo = styled.img`
   z-index: 220;
 `
 
-const Info = styled.div`
+const Info = styled.div<{ $visible: boolean }>`
   position: absolute;
   width: 100%;
   padding: 20px;
   color: #fff;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0));
   z-index: 230;
-  bottom: 0;
-  transition: opacity 0.3s ease;
+  bottom: ${({$visible: visible}) => visible ? 0 : -200 }px;
+  transition: 0.5s;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -142,8 +142,8 @@ export function UserCard({
       onDragProgress={swipeProgressCallback}
     >
       <CardContent>
-        <CardContainer visible={visible}>
-          <Info>
+        <CardContainer $visible={visible}>
+          <Info $visible={visible}>
             <PhotoPreviewContainer>
               {user.photos
                 .filter(p => !p.isProfilePhoto)

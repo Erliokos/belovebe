@@ -1,7 +1,7 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react'
 import styled from 'styled-components'
 
-const Container = styled.div<{ blur: number }>`
+const Container = styled.div<{ $blur: number }>`
   position: absolute;
   width: 100%;
   height: 100%;
@@ -10,7 +10,7 @@ const Container = styled.div<{ blur: number }>`
   -webkit-user-drag: none;
   padding: 16px;
   z-index: 200;
-  filter: blur(${({ blur }) => blur}px);
+  filter: blur(${({ $blur: blur }) => blur}px);
   transition: filter 0.1s ease-out; // Плавный переход для blur
   backface-visibility: hidden;
   transform: translateZ(0);
@@ -62,14 +62,14 @@ export function SwipeCard({
       setBlurAmount(blur)
 
       if (onDragProgress) {
-        onDragProgress(progress)
+        onDragProgress(progress * 20)
       }
     },
     [onDragProgress, threshold]
   )
 
   const handleStart = useCallback((e: React.TouchEvent | React.MouseEvent) => {
-    e.preventDefault()
+    // e.preventDefault()
     setDragging(true)
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
     startX.current = clientX
@@ -84,7 +84,7 @@ export function SwipeCard({
   const handleMove = useCallback(
     (e: React.TouchEvent | React.MouseEvent) => {
       if (!isDragging) return
-      e.preventDefault()
+      // e.preventDefault()
 
       const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
       currentX.current = clientX - startX.current
@@ -109,8 +109,9 @@ export function SwipeCard({
       // Свайп влево (дизлайк)
       if (cardRef.current) {
         cardRef.current.style.transition = 'transform 0.3s ease-out'
-        cardRef.current.style.transform = `translateX(-${window.innerWidth * 1.2}px) rotate(-180deg)`
+        cardRef.current.style.transform = `translateX(-${window.innerWidth * 1.2}px) rotate(-30deg)`
         cardRef.current.style.filter = `blur(20px)`
+        onDragProgress?.(20)
       }
       // Плавно убираем blur при свайпе
       setBlurAmount(0)
@@ -119,7 +120,7 @@ export function SwipeCard({
       // Свайп вправо (лайк)
       if (cardRef.current) {
         cardRef.current.style.transition = 'transform 0.3s ease-out'
-        cardRef.current.style.transform = `translateX(${window.innerWidth * 1.2}px) rotate(180deg)`
+        cardRef.current.style.transform = `translateX(${window.innerWidth * 1.2}px) rotate(30deg)`
         cardRef.current.style.filter = `blur(20px)`
       }
       setBlurAmount(0)
@@ -150,7 +151,7 @@ export function SwipeCard({
 
   return (
     <Container
-      blur={blurAmount}
+      $blur={blurAmount}
       key={id}
       ref={cardRef}
       onMouseDown={handleStart}
