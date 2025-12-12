@@ -5,9 +5,9 @@ import ProtectedRoute from './components/ProtectedRoute'
 import LoginPage from './pages/LoginPage'
 import FeedPage from './pages/FeedPage'
 import TaskDetailPage from './pages/TaskDetailPage'
-import MyTasksPage from './pages/MyTasksPage'
+
 import MyTaskDetailPage from './pages/MyTaskDetailPage'
-import MyResponsesPage from './pages/MyResponsesPage'
+
 import ProfilePage from './pages/ProfilePage'
 
 const queryClient = new QueryClient({
@@ -55,7 +55,7 @@ function App() {
             element={
               <ProtectedRoute>
                 <Layout>
-                  <MyTasksPage />
+                  <div>g</div>
                 </Layout>
               </ProtectedRoute>
             }
@@ -75,7 +75,7 @@ function App() {
             element={
               <ProtectedRoute>
                 <Layout>
-                  <MyResponsesPage />
+                  <div>g</div>
                 </Layout>
               </ProtectedRoute>
             }
