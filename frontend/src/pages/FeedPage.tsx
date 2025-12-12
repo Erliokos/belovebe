@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
@@ -7,7 +7,7 @@ import MapModal from '../components/MapModal';
 import IconMap from '../assets/map.svg?react'
 import { UserCard } from '../components/UserCard';
 import { usersMok } from '../stores/mok';
-import { UserCardBacking } from '../components/UserCardBacking';
+// import { UserCardBacking } from '../components/UserCardBacking';
 
 const Container = styled.div`
   width: 100%;
@@ -76,20 +76,20 @@ export default function discoverPage() {
   const { t } = useTranslation();
 
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
-  const [swipeProgress, setSwipeProgress] = useState(0)
+  // const [swipeProgress, setSwipeProgress] = useState(0)
 
   const [shift, setShift] = useState(0)
-  const [nextShift, setNextShift] = useState(1)
+  // const [nextShift, setNextShift] = useState(1)
 
   const handleLike = useCallback(() => {
     setShift(prev => prev + 1)
   }, [])
 
-  useEffect(() => {
-    setTimeout(() => {
-      setNextShift(shift + 1)
-    }, 100)
-  },[shift])
+  // useEffect(() => {
+  //   setTimeout(() => {
+  //     setNextShift(shift + 1)
+  //   }, 100)
+  // },[shift])
   
 
   const [ageMin, ageMax, maxDistance, limit, skip] = [
@@ -142,13 +142,7 @@ export default function discoverPage() {
       </Header>
 
       <UserList>
-        {usersMok[nextShift] && (
-          <UserCardBacking
-            key={usersMok[nextShift].id + 'second'}
-            user={usersMok[nextShift]}
-            swipeProgress={swipeProgress}
-          />
-        )}
+
 
         {usersMok[shift] && (
           <UserCard
@@ -156,7 +150,7 @@ export default function discoverPage() {
             onLike={handleLike}
             onDislike={handleLike}
             user={usersMok[shift]}
-            swipeProgressCallback={setSwipeProgress} // новый проп
+            // swipeProgressCallback={setSwipeProgress} // новый проп
           />
         )}
       </UserList>
