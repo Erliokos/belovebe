@@ -1,180 +1,97 @@
-import React, { useRef, useState, useEffect } from 'react'
+import { useRef, useState } from 'react'
 import styled from 'styled-components'
-import { useSwipeManager } from '../stores/SwipeManagerContext'
 
-const Wrapper = styled.div`
-  position: relative;
-  width: 100%;
-  overflow: hidden;
-  padding: 8px;
-`
-
-const SideButtons = styled.div<{ $isOpen: boolean; side: 'left' | 'right' }>`
+const Container = styled.div`
   position: absolute;
-  top: 0;
-  bottom: 0;
-  display: flex;
-  transition: width 0.3s ease;
-  overflow: hidden;
-  ${({ side }) => (side === 'left' ? 'left: 0;' : 'right: 0;')}
-  width: ${({ $isOpen }) => ($isOpen ? '140px' : '0px')};
-`
-
-const Card = styled.div<{ $offsetX: number }>`
-  transform: translateX(${({ $offsetX }) => $offsetX}px);
-  transition: transform 0.2s ease;
-  user-select: none;
   width: 100%;
-  cursor: grab;
+  height: 100%;
+  touch-action: none;
+  will-change: auto;
+  padding: 16px;
+  z-index: 200;
 `
 
 interface SwipeCardProps {
   id: string
   children: React.ReactNode
-  leftAction?: React.ReactNode
-  rightAction?: React.ReactNode
+  leftAction?: () => void
+  rightAction?: () => void
+  onDragProgress?: (progress: number) => void
 }
 
-export const SwipeCard: React.FC<SwipeCardProps> = ({
+export function SwipeCard({
   id,
   children,
   leftAction,
-  rightAction
-}) => {
-  const { openCardId, openSide, setOpen } = useSwipeManager()
-
-  const isOpen = openCardId === id
+  rightAction,
+  onDragProgress
+}: SwipeCardProps) {
+  const cardRef = useRef<HTMLDivElement>(null)
+  const [isDragging, setDragging] = useState(false)
   const startX = useRef(0)
   const currentX = useRef(0)
-  const directionLocked = useRef<null | 'left' | 'right'>(null)
-  const swipeHandled = useRef(false)
-  const active = useRef(false)
+  const threshold = 1000
 
-  const [offsetX, setOffsetX] = useState(0)
-  const max = 140
-
-  /** Получаем X координату из Touch или Mouse события */
-  const getClientX = (e: any) => {
-    if (e.touches && e.touches.length > 0) return e.touches[0].clientX
-    return e.clientX
+  const handleStart = (e: React.TouchEvent | React.MouseEvent) => {
+    setDragging(true)
+    startX.current = 'touches' in e ? e.touches[0].clientX : e.clientX
   }
 
-  /** Синхронизируем состояние открытой карточки */
-  useEffect(() => {
-    if (!isOpen) {
-      setOffsetX(0)
-    } else if (openSide === 'left') {
-      setOffsetX(max)
-    } else if (openSide === 'right') {
-      setOffsetX(-max)
+  const handleMove = (e: React.TouchEvent | React.MouseEvent) => {
+    if (!isDragging) return
+    const x = 'touches' in e ? e.touches[0].clientX : e.clientX
+    currentX.current = x - startX.current
+
+    if (cardRef.current) {
+      cardRef.current.style.transform = `translateX(${
+        currentX.current
+      }px) rotate(${currentX.current / 20}deg)`
     }
-  }, [isOpen, openSide])
 
-  /** START — начало свайпа */
-  const handleStart = (e: any) => {
-    active.current = true
-    const x = getClientX(e)
-    startX.current = x
-    currentX.current = x
-    directionLocked.current = null
-    swipeHandled.current = false
-  }
-
-  /** MOVE — двигаем */
-  const handleMove = (e: any) => {
-    if (!active.current) return
-
-    // для мыши: если кнопка не зажата — не обрабатываем
-    if ('buttons' in e && e.buttons === 0) return
-
-    const x = getClientX(e)
-    const diff = x - startX.current
-    currentX.current = x
-
-    if (swipeHandled.current) return
-
-    // определяем направление
-    if (!directionLocked.current) {
-      if (Math.abs(diff) < 50) return
-
-      directionLocked.current = diff > 0 ? 'right' : 'left'
-
-      // закрываем при свайпе в сторону закрытия
-      if (isOpen) {
-        if (
-          (openSide === 'left' && directionLocked.current === 'left') ||
-          (openSide === 'right' && directionLocked.current === 'right')
-        ) {
-          setOpen(null, null)
-          swipeHandled.current = true
-          return
-        }
-      }
-
-      // открываем
-      if (directionLocked.current === 'right' && leftAction && !isOpen) {
-        setOpen(id, 'left')
-        swipeHandled.current = true
-      } else if (directionLocked.current === 'left' && rightAction && !isOpen) {
-        setOpen(id, 'right')
-        swipeHandled.current = true
-      }
-
-      return
+    if (onDragProgress) {
+      const progress = Math.min(Math.abs(currentX.current) / threshold, 1)
+      onDragProgress(progress)
     }
   }
 
-  /** END — отпускаем палец/мышь */
   const handleEnd = () => {
-    if (active.current) {
-      if (
-        isOpen &&
-        !swipeHandled.current &&
-        Math.abs(currentX.current - startX.current) < 30
-      ) {
-        setOpen(null, null)
+    setDragging(false)
+    const delta = currentX.current
+
+    if (delta < -240) {
+      cardRef.current!.style.transition = '0.3s'
+      cardRef.current!.style.transform = 'translateX(-120%) rotate(-20deg)'
+      leftAction?.()
+    } else if (delta > 240) {
+      cardRef.current!.style.transition = '0.3s'
+      cardRef.current!.style.transform = 'translateX(120%) rotate(20deg)'
+      rightAction?.()
+    } else {
+      if (cardRef.current) {
+        cardRef.current.style.transition = '0.25s'
+        cardRef.current.style.transform = 'translateX(0) rotate(0)'
       }
     }
 
-    active.current = false
-    directionLocked.current = null
-    swipeHandled.current = false
-  }
-
-  /** Клик по карточке закрывает её */
-  const handleCardClick = () => {
-    if (isOpen) {
-      setOpen(null, null)
+    if (onDragProgress) {
+      onDragProgress(0)
     }
   }
 
   return (
-    <Wrapper>
-      {leftAction && (
-        <SideButtons side="left" $isOpen={isOpen && openSide === 'left'}>
-          {leftAction}
-        </SideButtons>
-      )}
-
-      {rightAction && (
-        <SideButtons side="right" $isOpen={isOpen && openSide === 'right'}>
-          {rightAction}
-        </SideButtons>
-      )}
-
-      <Card
-        $offsetX={offsetX}
-        onTouchStart={handleStart}
-        onTouchMove={handleMove}
-        onTouchEnd={handleEnd}
-        onMouseDown={handleStart}
-        onMouseMove={handleMove}
-        onMouseUp={handleEnd}
-        onMouseLeave={handleEnd}
-        onClick={handleCardClick}
-      >
-        {children}
-      </Card>
-    </Wrapper>
+    <Container
+      key={id}
+      ref={cardRef}
+      onMouseDown={handleStart}
+      onMouseMove={handleMove}
+      onMouseUp={handleEnd}
+      onMouseLeave={isDragging ? handleEnd : undefined}
+      onTouchStart={handleStart}
+      onTouchMove={handleMove}
+      onTouchEnd={handleEnd}
+    >
+      {children}
+    </Container>
   )
 }
+

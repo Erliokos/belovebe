@@ -5,6 +5,7 @@ import { getDistance } from '../utils/utils';
 
 const router = Router();
 const prisma = new PrismaClient();
+router.use(authMiddleware);
 
 // GET /discover
 router.get("/", async (req: AuthRequest, res: Response) => {
@@ -13,6 +14,11 @@ router.get("/", async (req: AuthRequest, res: Response) => {
     const limit = Number(req.query.limit) || 20;
     const skip = Number(req.query.skip) || 0;
 
+    console.log('userId', userId);
+    console.log('limit', limit);
+    console.log('skip', skip);
+    
+
     // 1. Загружаем профиль текущего пользователя
     const me = await prisma.profile.findUnique({
       where: { id: userId },
@@ -20,6 +26,9 @@ router.get("/", async (req: AuthRequest, res: Response) => {
         user: true,
       },
     });
+
+    console.log('me', me);
+    
 
     if (!me) {
       return res.status(404).json({ error: "Profile not found" });
@@ -37,6 +46,8 @@ router.get("/", async (req: AuthRequest, res: Response) => {
       },
     });
 
+    console.log('blocked', blocked);
+
     const blockedIds = blocked.map(b =>
       b.blockerId === userId ? b.blockedId : b.blockerId
     );
@@ -46,6 +57,9 @@ router.get("/", async (req: AuthRequest, res: Response) => {
       where: { fromUserId: userId },
       select: { toUserId: true },
     });
+
+    console.log('myLikes', myLikes);
+    
 
     const likedIds = myLikes.map(l => l.toUserId);
 
@@ -88,10 +102,13 @@ router.get("/", async (req: AuthRequest, res: Response) => {
       take: limit * 5, // берем шире, потом срежем по расстоянию/возрасту
     });
 
+    console.log('candidates', candidates);
+    
+
     // 6. Фильтры возраста и расстояния
-    const ageMin = Number(req.query.ageMin) || 18;
+    const ageMin = Number(req.query.ageMin) || 0;
     const ageMax = Number(req.query.ageMax) || 99;
-    const maxDistance = Number(req.query.maxDistance) || 50; // км
+    const maxDistance = Number(req.query.maxDistance) || 50000; // км
 
     const now = new Date();
 
@@ -112,7 +129,7 @@ router.get("/", async (req: AuthRequest, res: Response) => {
       }
 
       // минимум 1 фото
-      if (p.photos.length === 0) return false;
+      // if (p.photos.length === 0) return false;
 
       return true;
     });

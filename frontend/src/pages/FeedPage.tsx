@@ -1,30 +1,28 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-// import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { discoverAPI } from '../api/client';
-// import CategoriesFiltersModal from '../components/CategoriesFiltersModal';
 import MapModal from '../components/MapModal';
-import { DiscoverUser } from '../types';
-// import IconFilter from '../assets/filter.svg?react'
 import IconMap from '../assets/map.svg?react'
-import { SwipeManagerProvider } from '../stores/SwipeManagerContext';
+import { UserCard } from '../components/UserCard';
+import { usersMok } from '../stores/mok';
+import { UserCardBacking } from '../components/UserCardBacking';
 
 const Container = styled.div`
-  padding: 16px;
-  max-width: 100%;
+  width: 100%;
+  height: 100%;
 `;
 
 const Header = styled.div`
-  padding: 0 8px;
-  height: 40px;
+  padding: 16px;
+  height: var(--header-height);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
   gap: 12px;
-`;
+  background-color: var(--main-color);
+`
 
 const Title = styled.h1`
   font-size: 20px;
@@ -48,9 +46,12 @@ const Button = styled.button`
     opacity: 0.8;
   }
 `
-const TasksList = styled.div`
+const UserList = styled.div`
+  position: relative;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  height: 100%;
 `;
 
 const LoadingText = styled.div`
@@ -71,47 +72,35 @@ const FilterIcon = styled.svg`
   fill: var(--tg-theme-button-text-color, #ffffff);
 `
 
-
-
-export default function FeedPage() {
+export default function discoverPage() {
   const { t } = useTranslation();
-  // const navigate = useNavigate();
-  // const { 
-  //   filters, 
-  //   setFilters, 
-  //   filtersLoaded, 
-  //   setFiltersLoaded,
-  //   setFiltersModalOpen,
-  //   isFiltersModalOpen 
-  // } = useAppStore();
-  // const [page] = useState(1);
+
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+  const [swipeProgress, setSwipeProgress] = useState(0)
 
-  // Загружаем фильтры при первой загрузке
-  // const { data: userFilters, isLoading: filtersLoading } = useQuery({
-  //   queryKey: ['userFilters'],
-  //   queryFn: filtersAPI.getFilters,
-  //   enabled: !filtersLoaded,
-  // });
+  const [shift, setShift] = useState(0)
+  const [nextShift, setNextShift] = useState(1)
 
-  // useEffect(() => {
-  //   if (userFilters && !filtersLoaded) {
-  //     setFilters(userFilters);
-  //     setFiltersLoaded(true);
-  //   }
-  // }, [userFilters, filtersLoaded, setFilters, setFiltersLoaded]);
+  const handleLike = useCallback(() => {
+    setShift(prev => prev + 1)
+  }, [])
 
-  // Формируем параметры запроса задач
-  // const countriesParam = filters.selectedCountries.length > 0 
-  //   ? filters.selectedCountries.join(',') 
-  //   : undefined;
-  // const citiesParam = filters.selectedCities.length > 0 
-  //   ? filters.selectedCities.join(',') 
-  //   : undefined;
- 
-  const [ageMin, ageMax, maxDistance, limit, skip] = [18, 100, 100, 100, 0]
+  useEffect(() => {
+    setTimeout(() => {
+      setNextShift(shift + 1)
+    }, 100)
+  },[shift])
+  
 
-  const { data, isLoading, error } = useQuery({
+  const [ageMin, ageMax, maxDistance, limit, skip] = [
+    undefined,
+    undefined,
+    undefined,
+    10,
+    undefined
+  ]
+
+  const { isLoading, error } = useQuery({
     queryKey: ['discover', ageMin, ageMax, maxDistance, limit, skip],
     queryFn: () =>
       discoverAPI.getDiscover({
@@ -121,26 +110,13 @@ export default function FeedPage() {
         limit,
         skip
       }),
-    enabled: !!ageMin && !!ageMax,
-    refetchInterval: 5000
   })
 
-  // const handleTaskClick = (taskId: number) => {
-  //   navigate(`/task/${taskId}`);
-  // };
-
-  // if (filtersLoading || !filtersLoaded) {
-  //   return (
-  //     <Container>
-  //       <LoadingText>{t('feed.loading')}</LoadingText>
-  //     </Container>
-  //   );
-  // }
 
   if (isLoading) {
     return (
       <Container>
-        <LoadingText>{t('feed.loading')}</LoadingText>
+        <LoadingText>{t('discover.loading')}</LoadingText>
       </Container>
     );
   }
@@ -148,7 +124,7 @@ export default function FeedPage() {
   if (error) {
     return (
       <Container>
-        <ErrorText>{t('feed.error')}</ErrorText>
+        <ErrorText>{t('discover.error')}</ErrorText>
       </Container>
     );
   }
@@ -156,7 +132,7 @@ export default function FeedPage() {
   return (
     <Container>
       <Header>
-        <Title>{t('feed.title')}</Title>
+        <Title>{t('discover.title')}</Title>
         <Button onClick={() => setIsMapModalOpen(true)}>
           <FilterIcon as={IconMap} />
         </Button>
@@ -164,16 +140,27 @@ export default function FeedPage() {
           <FilterIcon as={IconFilter} />
         </Button> */}
       </Header>
-      <SwipeManagerProvider>
-        <TasksList>
-          {data?.users?.map((user: DiscoverUser) => {
-            return <div>{user.displayName}</div>
-          })}
-          {data?.users?.length === 0 && (
-            <LoadingText>{t('feed.noTasks')}</LoadingText>
-          )}
-        </TasksList>
-      </SwipeManagerProvider>
+
+      <UserList>
+        {usersMok[nextShift] && (
+          <UserCardBacking
+            key={usersMok[nextShift].id + 'second'}
+            user={usersMok[nextShift]}
+            swipeProgress={swipeProgress}
+          />
+        )}
+
+        {usersMok[shift] && (
+          <UserCard
+            key={usersMok[shift].id + 'first'}
+            onLike={handleLike}
+            onDislike={handleLike}
+            user={usersMok[shift]}
+            swipeProgressCallback={setSwipeProgress} // новый проп
+          />
+        )}
+      </UserList>
+
       {/* {isFiltersModalOpen && <CategoriesFiltersModal />} */}
       {isMapModalOpen && <MapModal onClose={() => setIsMapModalOpen(false)} />}
     </Container>

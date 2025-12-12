@@ -5,8 +5,8 @@
     "error": "Authentication error",
     "tryToReload": "Try to reload the page"
   },
-  "feed": {
-    "title": "Task Feed",
+  "discover": {
+    "title": "People",
     "responses": "Responses",
     "myTasks": "My Tasks",
     "filters": "Filters",
@@ -26,7 +26,7 @@
     "accepted": "Accepted",
     "rejected": "Rejected",
     "openChat": "Open chat",
-    "notResponses": "You don't have any feedback yet"
+    "notResponses": "You don't have any discoverback yet"
   },
   "filters": {
     "title": "Filters",

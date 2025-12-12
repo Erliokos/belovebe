@@ -6,22 +6,22 @@ import TaskIcon from '../assets/tasks.svg?react'
 import ResponesIcon from '../assets/respones.svg?react'
 import MyTasksIcon from '../assets/mytask.svg?react'
 import ProfileIcon from '../assets/profile.svg?react'
-import { useQuery } from '@tanstack/react-query'
-import { notificationsAPI } from '../api/client'
-import { useAuthStore } from '../stores/authStore'
-import { useNotificationState } from '../stores/notificationStore'
-import { Badge } from '../globalStyle'
+// import { useQuery } from '@tanstack/react-query'
+// import { notificationsAPI } from '../api/client'
+// import { useAuthStore } from '../stores/authStore'
+// import { useNotificationState } from '../stores/notificationStore'
+// import { Badge } from '../globalStyle'
 
 const LayoutContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  padding-bottom: 60px;
+  height: 100vh;
+  width: 100vw;
 `
 
 const Content = styled.main`
-  flex: 1;
-  width: 100%;
+  position: fixed;
+  height: 100vh;
+  width: 100vw;
+  padding-bottom: calc(var(--header-height) + var(--bottom-menu-height));
 `
 
 const Icon = styled.svg<{ $isActive: boolean }>`
@@ -39,8 +39,8 @@ const BottomNavigation = styled.nav`
   bottom: 0;
   left: 0;
   right: 0;
-  height: 80px;
-  background-color: var(--tg-theme-bg-color, #ffffff);
+  height: var(--bottom-menu-height);
+  background-color: var(--main-color);
   border-top: 1px solid var(--tg-theme-hint-color, #e0e0e0);
   display: flex;
   justify-content: space-around;
@@ -83,19 +83,19 @@ export default function Layout({ children }: LayoutProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const { activeTab, setActiveTab } = useAppStore()
-  const { setUnreadMessage } = useNotificationState()
-  const { user } = useAuthStore()
+  // const { setUnreadMessage } = useNotificationState()
+  // const { user } = useAuthStore()
 
-  const { data: notifications } = useQuery({
-    queryKey: ['notifications'],
-    queryFn: notificationsAPI.getUnreadMessage,
-    refetchInterval: 5000,
-    enabled: !!user
-  })
+  // const { data: notifications } = useQuery({
+  //   queryKey: ['notifications'],
+  //   queryFn: notificationsAPI.getUnreadMessage,
+  //   refetchInterval: 5000,
+  //   enabled: !!user
+  // })
 
-  useEffect(() => {
-    setUnreadMessage(notifications?.myUnreadMessageCount ?? [])
-  }, [notifications])
+  // useEffect(() => {
+  //   setUnreadMessage(notifications?.myUnreadMessageCount ?? [])
+  // }, [notifications])
 
   useEffect(() => {
     const path = location.pathname
@@ -132,24 +132,24 @@ export default function Layout({ children }: LayoutProps) {
           onClick={() => handleNavClick('responses')}
         >
           <Icon as={ResponesIcon} $isActive={activeTab === 'responses'} />
-          {!!notifications?.unreadMessageCount &&
+          {/* {!!notifications?.unreadMessageCount &&
             notifications?.unreadMessageCount > 0 && (
               <Badge>{notifications?.unreadMessageCount}</Badge>
-            )}
+            )} */}
         </NavButton>
         <NavButton
           $active={activeTab === 'my-tasks'}
           onClick={() => handleNavClick('my-tasks')}
         >
           <Icon as={MyTasksIcon} $isActive={activeTab === 'my-tasks'} />
-          {!!notifications &&
+          {/* {!!notifications &&
             (notifications?.myUnreadMessageCount.length > 0 ||
               notifications.unreadResponses.length > 0) && (
               <Badge>
                 {notifications?.myUnreadMessageCount.length +
                   notifications.unreadResponses.length}
               </Badge>
-            )}
+            )} */}
         </NavButton>
         <NavButton
           $active={activeTab === 'profile'}

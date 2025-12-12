@@ -5,6 +5,9 @@ export const GlobalStyles = createGlobalStyle`
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  --header-height: 60px;
+  --bottom-menu-height: 80px;
+  --main-color: #142864;
 }
 
 body {
