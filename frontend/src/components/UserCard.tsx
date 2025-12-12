@@ -9,10 +9,12 @@ const CardContainer = styled.div<{ visible: boolean }>`
   border-radius: 24px;
   overflow: hidden;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+  opacity: ${props => (props.visible ? 1 : 0)};
   transform: scale(${props => (props.visible ? 1 : 0.1)});
-  transition: 0.5s ease;
-  filter: blur(${props => (props.visible ? 0 : 5)}px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
   z-index: 220;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
 `
 
 const Photo = styled.img`
@@ -22,18 +24,19 @@ const Photo = styled.img`
   z-index: 220;
 `
 
-const Info = styled.div<{ visible: boolean }>`
+const Info = styled.div`
   position: absolute;
   width: 100%;
   padding: 20px;
   color: #fff;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0));
   z-index: 230;
-  bottom: ${props => (props.visible ? 0 : -200)}px;
-  transition: 2s cubic-bezier(1, 0, 0, 1);
+  bottom: 0;
+  transition: opacity 0.3s ease;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  backface-visibility: hidden;
 `
 
 const Name = styled.div`
@@ -67,6 +70,17 @@ const PhotoPreview = styled.img`
   border-radius: 8px;
   object-fit: cover;
   border: 2px solid #fff;
+`
+
+// Добавляем слой для предотвращения мерцания
+const CardContent = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  padding: 16px;
 `
 
 export interface DiscoverPhoto {
@@ -106,8 +120,14 @@ export function UserCard({
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
-    const timer = setTimeout(() => setVisible(true), 50)
-    return () => clearTimeout(timer)
+    // Используем requestAnimationFrame для синхронизации с браузером
+    const rafId = requestAnimationFrame(() => {
+      setVisible(true)
+    })
+    
+    return () => {
+      cancelAnimationFrame(rafId)
+    }
   }, [])
 
   const age = user.birthdate
@@ -121,31 +141,32 @@ export function UserCard({
       rightAction={onLike}
       onDragProgress={swipeProgressCallback}
     >
-      <CardContainer visible={visible}>
-        <Info visible={visible}>
-          <PhotoPreviewContainer>
-            {user.photos
-              .filter(p => !p.isProfilePhoto)
-              .slice(0, 3)
-              .map(p => (
-                <PhotoPreview key={p.id} src={p.url} />
-              ))}
-          </PhotoPreviewContainer>
-          <Name>
-            {user.displayName} {age ? `, ${age}` : ''}
-          </Name>
-          <Details>
-            {user.city && user.country ? `${user.city}, ${user.country}` : ''}
-            {user.gender ? ` • ${user.gender}` : ''}
-            {user.genderPreferences.length
-              ? ` • Interested in ${user.genderPreferences.join(', ')}`
-              : ''}
-            {user.bio && <Bio>{user.bio}</Bio>}
-          </Details>
-        </Info>
-        {mainPhoto && <Photo src={mainPhoto.url} alt={user.displayName} />}
-        {/* Мини-превью других фото */}
-      </CardContainer>
+      <CardContent>
+        <CardContainer visible={visible}>
+          <Info>
+            <PhotoPreviewContainer>
+              {user.photos
+                .filter(p => !p.isProfilePhoto)
+                .slice(0, 3)
+                .map(p => (
+                  <PhotoPreview key={p.id} src={p.url} />
+                ))}
+            </PhotoPreviewContainer>
+            <Name>
+              {user.displayName} {age ? `, ${age}` : ''}
+            </Name>
+            <Details>
+              {user.city && user.country ? `${user.city}, ${user.country}` : ''}
+              {user.gender ? ` • ${user.gender}` : ''}
+              {user.genderPreferences.length
+                ? ` • Interested in ${user.genderPreferences.join(', ')}`
+                : ''}
+              {user.bio && <Bio>{user.bio}</Bio>}
+            </Details>
+          </Info>
+          {mainPhoto && <Photo src={mainPhoto.url} alt={user.displayName} />}
+        </CardContainer>
+      </CardContent>
     </SwipeCard>
   )
 }
